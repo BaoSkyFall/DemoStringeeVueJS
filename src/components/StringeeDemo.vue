@@ -67,12 +67,14 @@
         </el-container>
       </el-main>
       <div id="video-container" ref="fullscreenRef">
-        <video
-          id="localVideo"
-          autoplay
-          :srcObject.prop="srcVideoLocal"
-          ref="localVideoRef"
-        ></video>
+        <div id="localVideo-container" ref="localVideoRef">
+          <video
+            id="localVideo"
+            autoplay
+            :srcObject.prop="srcVideoLocal"
+          ></video>
+        </div>
+
         <div id="remoteVideo">
           <video
             autoplay
@@ -82,12 +84,13 @@
           ></video>
           <div id="action">
             <div class="left">
-              <!-- <el-button
+              <el-button
                 type="info"
                 icon="el-icon-minus"
                 plain
                 circle
-              ></el-button> -->
+                hidden
+              ></el-button>
             </div>
             <div class="center">
               <el-button
@@ -185,8 +188,7 @@ export default {
       tableData: Array(20).fill(item),
     };
   },
-  mounted() {
-  },
+  mounted() {},
   methods: {
     onFullScreen() {
       let el1 = this.$refs["fullscreenRef"];
@@ -203,8 +205,8 @@ export default {
           document.mozFullScreenElement ||
           document.msFullscreenElement
         ) {
-          refLocalStream.style.width = "90px";
-          refLocalStream.style.height = "90px";
+          refLocalStream.style.width = "95px";
+          refLocalStream.style.height = "95px";
           if (document.exitFullscreen) {
             document.exitFullscreen();
           } else if (document.webkitExitFullscreen) {
@@ -216,8 +218,8 @@ export default {
           }
         } else {
           if (el1.requestFullscreen) {
-            refLocalStream.style.width = "150px";
-            refLocalStream.style.height = "150px";
+            refLocalStream.style.width = "120px";
+            refLocalStream.style.height = "120px";
 
             el1.requestFullscreen();
           } else if (el1.mozRequestFullScreen) {
@@ -253,22 +255,20 @@ export default {
       }
     },
     handleCommand(command) {
-
       switch (command) {
         case "720":
-          
-          this.currentCall.videoResolution= { width: 1280, height: 720 };
+          this.currentCall.videoResolution = { width: 1280, height: 720 };
           break;
         case "480":
-          this.currentCall.videoResolution ={ width: 854, height: 480 };
+          this.currentCall.videoResolution = { width: 854, height: 480 };
 
           break;
         case "360":
-          this.currentCall.videoResolution={ width: 640, height: 360 };
+          this.currentCall.videoResolution = { width: 640, height: 360 };
 
           break;
         case "240":
-          this.currentCall.videoResolution={ width: 426, height: 240 };
+          this.currentCall.videoResolution = { width: 426, height: 240 };
 
           break;
         default:
@@ -277,16 +277,15 @@ export default {
     },
     settingCallEvent(callCurrentEvent) {
       console.log("settingCallEvent was Called:");
-      callCurrentEvent.on("addremotestream",  (stream) => {
+      callCurrentEvent.on("addremotestream", (stream) => {
         console.log("addRemoteStream....");
         console.log("stream:", stream);
         this.srcVideoRemote = stream;
       });
-      callCurrentEvent.on("addlocalstream",  (stream) =>{
+      callCurrentEvent.on("addlocalstream", (stream) => {
         console.log("addLocalStream....");
         console.log("stream:", stream);
         this.srcVideoLocal = stream;
-
       });
       callCurrentEvent.on("signalingstate", (state) => {
         console.log("signalingState....");
@@ -324,7 +323,7 @@ export default {
         console.log("------ connected!");
       });
 
-      this.client.on("authen",  (res) => {
+      this.client.on("authen", (res) => {
         console.log("------ on authen: ", res);
         this.$message({
           showClose: true,
@@ -337,7 +336,7 @@ export default {
         console.log("------ disconnected");
       });
 
-      this.client.on("incomingcall",(incomingcall)=> {
+      this.client.on("incomingcall", (incomingcall) => {
         console.log("incomingcall:", incomingcall);
         this.isRecieveCall = true;
         if (incomingcall) this.currentCall = incomingcall;
@@ -357,7 +356,7 @@ export default {
       console.log("enableVideo result: " + success);
     },
     onCallClient() {
-            this.currentCall = new StringeeCall(
+      this.currentCall = new StringeeCall(
         this.client,
         this.form.userIdLocal,
         this.form.userId,
@@ -365,7 +364,7 @@ export default {
       );
       console.log("calling....:", this.currentCall);
       this.settingCallEvent(this.currentCall);
-      this.currentCall.makeCall( (res) =>{
+      this.currentCall.makeCall((res) => {
         console.log("+++ call callback: ", res);
 
         console.log("make Call success");
@@ -380,7 +379,7 @@ export default {
       });
     },
     hangupCall() {
-      this.srcVideoRemote=null;
+      this.srcVideoRemote = null;
       this.currentCall.hangup(function (res) {
         console.log("+++ hangup call: ", res);
       });
@@ -432,9 +431,24 @@ video {
   background: #dee;
   width: 480px;
 }
-
-#localVideo {
+#localVideo-container {
   position: absolute;
+  top: 3%;
+  right: 2%;
+  z-index: 999;
+  width: 95px;
+  height: 95px;
+  border-radius: 50%;
+  -webkit-mask-image: -webkit-radial-gradient(circle, white 100%, black 100%);
+}
+#localVideo {
+  top: 0%;
+  right: -15%;
+  width: 135%;
+  position: absolute;
+}
+#localVideo {
+  /* position: absolute;
   top: 2%;
   right: 3%;
   width: 95px;
@@ -442,6 +456,11 @@ video {
   z-index: 10;
   background: #333;
   border-radius: 50%;
+  max-width: 100%;
+    background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat; */
+  /* transform: scale(2); */
 }
 
 #remoteVideo {
