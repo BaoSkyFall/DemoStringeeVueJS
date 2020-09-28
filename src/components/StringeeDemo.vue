@@ -56,7 +56,7 @@
               <el-button type="success" @click="onConnectAndAuth">
                 Connect
               </el-button>
-              <el-button type="primary" @click="onSubmit"
+              <el-button type="primary" @click="onCallClient"
                 >Call Client</el-button
               >
               <el-button type="warning" @click="onReceiveCall"
@@ -70,13 +70,13 @@
         <video
           id="localVideo"
           autoplay
-          :srcObject.prop="srcVideoRemote"
+          :srcObject.prop="srcVideoLocal"
           ref="localVideoRef"
         ></video>
         <div id="remoteVideo">
           <video
             autoplay
-            :srcObject.prop="srcVideoLocal"
+            :srcObject.prop="srcVideoRemote"
             style="height: 100%; width: 100%"
             ref="remoteVideoRef"
           ></video>
@@ -179,17 +179,13 @@ export default {
         userIdLocal: "baoTest",
         accessTokenStringee:
           "eyJjdHkiOiJzdHJpbmdlZS1hcGk7dj0xIiwidHlwIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJqdGkiOiJTS0VtZDIxcG5uTzRoYWtwYkdXYm12VExvRVJOWm1WWGNDLTE2MDEwMDQ2NzciLCJpc3MiOiJTS0VtZDIxcG5uTzRoYWtwYkdXYm12VExvRVJOWm1WWGNDIiwiZXhwIjoxNjAzNTk2Njc3LCJ1c2VySWQiOiJiYW9UZXN0In0.mMO6P5x2F_GRqCTsIMq3VWS5_c6vkKKIec_So2Q-3zA",
-        userId: "baoTest2",
+        userId: "Office",
       },
 
       tableData: Array(20).fill(item),
     };
   },
   mounted() {
-    let stringeeUlti = window.StringeeUtil;
-    console.log('stringeeUlti:', stringeeUlti);
-
-
   },
   methods: {
     onFullScreen() {
@@ -279,20 +275,20 @@ export default {
           break;
       }
     },
-    settingCallEvent(client) {
+    settingCallEvent(callCurrentEvent) {
       console.log("settingCallEvent was Called:");
-      var vm = this;
-      client.on("addremotestream", function (stream) {
+      callCurrentEvent.on("addremotestream",  (stream) => {
         console.log("addRemoteStream....");
         console.log("stream:", stream);
-        vm.srcVideoLocal = stream;
+        this.srcVideoRemote = stream;
       });
-      client.on("addlocalstream", function (stream) {
+      callCurrentEvent.on("addlocalstream",  (stream) =>{
         console.log("addLocalStream....");
         console.log("stream:", stream);
-        vm.srcVideoRemote = stream;
+        this.srcVideoLocal = stream;
+
       });
-      client.on("signalingstate", (state) => {
+      callCurrentEvent.on("signalingstate", (state) => {
         console.log("signalingState....");
         console.log("state:", state);
         if (state.code == 6) {
@@ -302,7 +298,7 @@ export default {
           });
         }
       });
-      client.on("mediastate", (mediastate) => {
+      callCurrentEvent.on("mediastate", (mediastate) => {
         console.log("mediastate ", mediastate);
 
         this.$notify({
@@ -312,13 +308,13 @@ export default {
         });
       });
 
-      client.on("info", function (info) {
+      callCurrentEvent.on("info", function (info) {
         console.log("on info:" + JSON.stringify(info));
       });
-      client.on("otherdevice", function (otherdevice) {
+      callCurrentEvent.on("otherdevice", function (otherdevice) {
         console.log("otherdevice:", otherdevice);
       });
-      client.on("error", function (error) {
+      callCurrentEvent.on("error", function (error) {
         console.log("error:", error);
       });
     },
@@ -328,9 +324,9 @@ export default {
         console.log("------ connected!");
       });
 
-      this.client.on("authen", function (res) {
+      this.client.on("authen",  (res) => {
         console.log("------ on authen: ", res);
-        vm.$message({
+        this.$message({
           showClose: true,
           message: "Connect success!",
           type: "success",
@@ -340,19 +336,12 @@ export default {
       this.client.on("disconnect", function (res) {
         console.log("------ disconnected");
       });
-      this.currentCall = new StringeeCall(
-        this.client,
-        this.form.userIdLocal,
-        this.form.userId,
-        true
-      );
-      console.log("currentCall:", this.currentCall);
-      var vm = this;
-      this.client.on("incomingcall", function (incomingcall) {
+
+      this.client.on("incomingcall",(incomingcall)=> {
         console.log("incomingcall:", incomingcall);
-        vm.isRecieveCall = true;
-        if (incomingcall) vm.currentCall = incomingcall;
-        vm.settingCallEvent(vm.currentCall);
+        this.isRecieveCall = true;
+        if (incomingcall) this.currentCall = incomingcall;
+        this.settingCallEvent(this.currentCall);
       });
     },
     onMute() {
@@ -367,11 +356,16 @@ export default {
       }
       console.log("enableVideo result: " + success);
     },
-    onSubmit() {
+    onCallClient() {
+            this.currentCall = new StringeeCall(
+        this.client,
+        this.form.userIdLocal,
+        this.form.userId,
+        true
+      );
       console.log("calling....:", this.currentCall);
       this.settingCallEvent(this.currentCall);
-      var vm = this;
-      this.currentCall.makeCall(function (res) {
+      this.currentCall.makeCall( (res) =>{
         console.log("+++ call callback: ", res);
 
         console.log("make Call success");
@@ -380,12 +374,13 @@ export default {
       });
     },
     onReceiveCall() {
-      console.log("currentCall:", this.currentCall);
+      console.log("currentCall inReceiveCall:", this.currentCall);
       this.currentCall.answer(function (res) {
         console.log("+++ answering call: ", res);
       });
     },
     hangupCall() {
+      this.srcVideoRemote=null;
       this.currentCall.hangup(function (res) {
         console.log("+++ hangup call: ", res);
       });
